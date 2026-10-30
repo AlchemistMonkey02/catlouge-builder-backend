@@ -7,6 +7,7 @@ const morgan = require("morgan");
 const rateLimit = require("express-rate-limit");
 const mongoSanitize = require("express-mongo-sanitize");
 
+const mongoose = require("mongoose");
 const connectDB = require("./config/db");
 const { tenantContext } = require("./middleware/authMiddleware");
 
@@ -33,9 +34,26 @@ const app = express();
 
 // --- Security & utility middleware ---
 app.use(helmet({ contentSecurityPolicy: false }));
+
+const allowedOrigins = (process.env.CLIENT_URL || "http://localhost:5173")
+  .split(",")
+  .map((url) => url.trim())
+  .filter(Boolean);
+
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      if (
+        allowedOrigins.includes("*") ||
+        allowedOrigins.includes(origin) ||
+        origin.endsWith("geoplanetsolution.com") ||
+        origin.startsWith("http://localhost:")
+      ) {
+        return callback(null, true);
+      }
+      return callback(null, true);
+    },
     credentials: true,
   })
 );
@@ -44,7 +62,14 @@ app.use(express.urlencoded({ extended: true, limit: "25mb" }));
 app.use(mongoSanitize());
 
 const path = require("path");
-app.use("/assets", express.static(path.join(__dirname, "../client/public/assets")));
+const fs = require("fs");
+const localAssets = path.join(__dirname, "public/assets");
+const clientAssets = path.join(__dirname, "../client/public/assets");
+if (fs.existsSync(localAssets)) {
+  app.use("/assets", express.static(localAssets));
+} else if (fs.existsSync(clientAssets)) {
+  app.use("/assets", express.static(clientAssets));
+}
 
 if (process.env.NODE_ENV !== "production") {
   app.use(morgan("dev"));
@@ -65,11 +90,25 @@ app.use("/api", apiLimiter);
 
 // --- API Root Health Check ---
 app.get("/", (req, res) => {
+  const dbConnected = mongoose.connection.readyState === 1;
   res.json({
     success: true,
     message: "AI E-Commerce Catalogue Builder API is running smoothly",
+    database: dbConnected ? "connected" : "disconnected",
     version: "2.5.0",
     environment: process.env.NODE_ENV || "development",
+  });
+});
+
+app.get("/api/health", (req, res) => {
+  const states = ["disconnected", "connected", "connecting", "disconnecting"];
+  const dbState = states[mongoose.connection.readyState] || "unknown";
+  res.json({
+    success: mongoose.connection.readyState === 1,
+    status: mongoose.connection.readyState === 1 ? "healthy" : "degraded",
+    database: dbState,
+    environment: process.env.NODE_ENV || "development",
+    timestamp: new Date().toISOString(),
   });
 });
 
@@ -94,8 +133,8 @@ app.use("/api/products", productRoutes);
 app.use(notFound);
 app.use(errorHandler);
 
-const PORT = process.env.PORT || 6000;
+const PORT = process.env.PORT || 5012;
 
 app.listen(PORT, () => {
-  console.log(`🚀 Master Catalogue Builder API running on http://localhost:${PORT}`);
+  console.log(`🚀 Master Catalogue Builder API running on port ${PORT}`);
 });
