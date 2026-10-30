@@ -35,28 +35,16 @@ const app = express();
 // --- Security & utility middleware ---
 app.use(helmet({ contentSecurityPolicy: false }));
 
-const allowedOrigins = (process.env.CLIENT_URL || "http://localhost:5173")
-  .split(",")
-  .map((url) => url.trim())
-  .filter(Boolean);
-
+// Fully permissive CORS with credentials support for any localhost port and live domain
 app.use(
   cors({
-    origin: (origin, callback) => {
-      if (!origin) return callback(null, true);
-      if (
-        allowedOrigins.includes("*") ||
-        allowedOrigins.includes(origin) ||
-        origin.endsWith("geoplanetsolution.com") ||
-        origin.startsWith("http://localhost:")
-      ) {
-        return callback(null, true);
-      }
-      return callback(null, true);
-    },
+    origin: true,
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"],
   })
 );
+app.options("*", cors());
 app.use(express.json({ limit: "25mb" }));
 app.use(express.urlencoded({ extended: true, limit: "25mb" }));
 app.use(mongoSanitize());
