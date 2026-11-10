@@ -37,27 +37,44 @@ const run = async () => {
 
   // 2. PARAMPARA THREADS & ATELIER (Kota Doria)
   let parampara = await Company.findOne({ organizationId: org._id, name: "Parampara Threads" });
+  const paramparaData = {
+    organizationId: org._id,
+    name: "Parampara Threads",
+    tagline: "Royal Gossamer Handlooms • GI Tagged Atelier",
+    industry: "Kota Doria Handlooms & Sarees",
+    district: "Kota, Rajasthan",
+    state: "Rajasthan",
+    odopProduct: "Kota Doria Handlooms",
+    whatsappNumber: "+91 94141 23456",
+    giTagNumber: "GI Tag Reg. No. 37",
+    udyamNumber: "UDYAM-RJ-20-0012345",
+    logoUrl: "/assets/kota-doria/0X2A0389_db4c4b42-1d9b-405b-9ea0-664b5017af38.jpg",
+    brandColors: { primary: "#7c2d12", secondary: "#431407", accent: "#d97706" },
+    contact: {
+      email: "orders@paramparathreads.com",
+      phone: "+91 9414123456",
+      website: "https://www.paramparathreads.com",
+      address: "Weavers Colony, Kaithun, Kota, Rajasthan – 325001",
+    },
+    qrLinks: {
+      businessProfile: "https://www.paramparathreads.com/catalogue",
+      whatsapp: "https://wa.me/919414123456",
+      website: "https://www.paramparathreads.com",
+      location: "https://maps.google.com/?q=Kaithun+Kota+Rajasthan",
+      instagram: "https://instagram.com/paramparathreads",
+      custom: "",
+      customLabel: "Scan for GI Provenance",
+    },
+    legal: { gstNumber: "08AAGCP9876K1Z2", currency: "INR" },
+    wholesaleTerms: "Minimum wholesale order: 10 pieces. Certified authentic GI Tag No. 37.",
+    isDefault: false,
+  };
+
   if (!parampara) {
-    parampara = await Company.create({
-      organizationId: org._id,
-      name: "Parampara Threads",
-      tagline: "Royal Gossamer Handlooms • GI Tagged Atelier",
-      industry: "Kota Doria Handlooms & Sarees",
-      logoUrl: "/assets/kota-doria/0X2A0389_db4c4b42-1d9b-405b-9ea0-664b5017af38.jpg",
-      brandColors: { primary: "#7c2d12", secondary: "#431407", accent: "#d97706" },
-      contact: {
-        email: "orders@paramparathreads.com",
-        phone: "+91 9414123456",
-        website: "https://www.paramparathreads.com",
-        address: "Weavers Colony, Kaithun, Kota, Rajasthan – 325001",
-      },
-      legal: { gstNumber: "08AAGCP9876K1Z2", currency: "INR" },
-      wholesaleTerms: "Minimum wholesale order: 25 pieces. Certified authentic GI Tag No. 37.",
-      isDefault: false,
-    });
+    parampara = await Company.create(paramparaData);
     console.log("Created Parampara Threads");
   } else {
-    parampara.logoUrl = "/assets/kota-doria/0X2A0389_db4c4b42-1d9b-405b-9ea0-664b5017af38.jpg";
+    Object.assign(parampara, paramparaData);
     await parampara.save();
   }
 
@@ -205,6 +222,15 @@ const run = async () => {
       category: "Kota Doria",
       price: 4850,
       mrp: 6500,
+      priceRange: "₹4,850 – ₹6,500",
+      moq: "10 Pieces (Wholesale)",
+      size: "6.5m (Includes 80cm Running Blouse Piece)",
+      material: "70% Mulberry Silk, 30% Fine Mallow Cotton",
+      materialComposition: "70% Mulberry Silk, 30% Fine Mallow Cotton",
+      finish: "Tested Electro-Gold Zari on Square Khat",
+      application: "Bridal Ensembles, Wedding Drapes & High-End Boutique Luxury",
+      useApplication: "Bridal Ensembles, Wedding Drapes & High-End Boutique Luxury",
+      verifiedCopy: true,
       stock: 500,
       image: "/assets/kota-doria/0X2A0389_db4c4b42-1d9b-405b-9ea0-664b5017af38.jpg",
       shortDescription: "Handwoven gossamer silk-cotton saree with authentic square khat checks and opulent zari border.",
@@ -225,6 +251,15 @@ const run = async () => {
       category: "Kota Doria",
       price: 2450,
       mrp: 3200,
+      priceRange: "₹2,450 – ₹3,200",
+      moq: "15 Pieces (Wholesale)",
+      size: "6.3m (Complete with Blouse Piece)",
+      material: "100% Breathable Kota Doria Cotton",
+      materialComposition: "100% Breathable Kota Doria Cotton",
+      finish: "Hand-Carved Teakwood Block Stamp & Natural Indigo",
+      application: "Daytime Festive Wear, Designer Boutiques & Summer Elegance",
+      useApplication: "Daytime Festive Wear, Designer Boutiques & Summer Elegance",
+      verifiedCopy: true,
       stock: 750,
       image: "/assets/kota-doria/bagru-hand-block-print-kota-doria-cotton-natural-dyed-3pc-unstitched-602.jpg",
       shortDescription: "Hand-printed using hand-carved teak woodblocks and plant-based vegetable dyes.",
@@ -244,6 +279,15 @@ const run = async () => {
       category: "Kota Doria",
       price: 2850,
       mrp: 3900,
+      priceRange: "₹2,850 – ₹3,900",
+      moq: "10 Sets (Wholesale)",
+      size: "Top 2.5m, Bottom 2.0m, Dupatta 2.5m",
+      material: "Pure Cotton Kota Doria Weave",
+      materialComposition: "Pure Cotton Kota Doria Weave",
+      finish: "Artisanal Bakhiya & Phanda Needlework",
+      application: "Boutique Tailoring, Festive Gatherings & Formal Ethnic Wear",
+      useApplication: "Boutique Tailoring, Festive Gatherings & Formal Ethnic Wear",
+      verifiedCopy: true,
       stock: 600,
       image: "/assets/kota-doria/lucknowi-chikankari-hand-embroidered-kota-doria-cotton-2pc-unstitched-127.jpg",
       shortDescription: "Intricate needlework featuring traditional Bakhiya and Phanda stitches on translucent weave.",
@@ -251,6 +295,91 @@ const run = async () => {
       technicalSpecifications: [
         { key: "Embroidery", value: "Hand Chikan Needlework" },
         { key: "Set", value: "Kurta & Dupatta Set (2pc)" }
+      ],
+      status: "approved"
+    },
+    {
+      sku: "KD-BRL-04",
+      name: "Pure Silk-Cotton Kaithun Bridal Saree Ensemble",
+      brand: "Parampara Threads",
+      companyId: parampara._id,
+      organizationId: org._id,
+      category: "Kota Doria",
+      price: 5200,
+      mrp: 7200,
+      priceRange: "₹5,200 – ₹7,200",
+      moq: "5 Pieces (Artisan Order)",
+      size: "6.5m (Includes 80cm Brocade Blouse Piece)",
+      material: "Pure Mulberry Silk Warp, Long-Staple Cotton Weft",
+      materialComposition: "Pure Mulberry Silk Warp, Long-Staple Cotton Weft",
+      finish: "Heavy Tested Zari Pallu with Reinforced Selvedge",
+      application: "Bridal Trousseau, Royal Wedding Banquets & Couture Lookbooks",
+      useApplication: "Bridal Trousseau, Royal Wedding Banquets & Couture Lookbooks",
+      verifiedCopy: true,
+      stock: 350,
+      image: "/assets/kota-doria/0Q8A3880_97438f9f-513a-428a-99a4-3952c7ce0619.jpg",
+      shortDescription: "Exquisite handwoven bridal saree featuring lustrous silk finish, reinforced selvedge, and gold floral bootis.",
+      description: "Exquisite handwoven bridal saree featuring lustrous silk finish, reinforced selvedge, and intricate gold floral bootis.",
+      technicalSpecifications: [
+        { key: "Loom", value: "Kaithun Village Pitloom" },
+        { key: "Yarn", value: "Mulberry Silk & Long Staple Cotton" },
+        { key: "Weight", value: "Under 380 grams" }
+      ],
+      status: "approved"
+    },
+    {
+      sku: "KD-SNG-05",
+      name: "Sanganeri Hand Block Print 3-Piece Dress Material",
+      brand: "Parampara Threads",
+      companyId: parampara._id,
+      organizationId: org._id,
+      category: "Kota Doria",
+      price: 1950,
+      mrp: 2600,
+      priceRange: "₹1,950 – ₹2,600",
+      moq: "15 Sets (Wholesale)",
+      size: "Top 2.5m, Bottom 2.0m, Dupatta 2.5m",
+      material: "100% Breathable Kota Doria Cotton",
+      materialComposition: "100% Breathable Kota Doria Cotton",
+      finish: "Calico Heritage Sanganer Hand Block",
+      application: "Everyday Luxury, Office Ethnic Attire & Boutique Retailing",
+      useApplication: "Everyday Luxury, Office Ethnic Attire & Boutique Retailing",
+      verifiedCopy: true,
+      stock: 800,
+      image: "/assets/kota-doria/green-kota-doria-cotton-hand-block-sanganeri-print-3pc-unstitched-858.jpg",
+      shortDescription: "Graceful Rajasthani floral motifs hand-stamped onto breathable square-checked fabric, with matching dupatta.",
+      description: "Graceful Rajasthani floral motifs hand-stamped onto breathable square-checked fabric, complete with matching dupatta.",
+      technicalSpecifications: [
+        { key: "Set Content", value: "Top 2.5m, Bottom 2.0m, Dupatta 2.5m" },
+        { key: "Print", value: "Calico Heritage Sanganer" }
+      ],
+      status: "approved"
+    },
+    {
+      sku: "KD-DUP-06",
+      name: "Handcrafted Lucknowi Chikankari Pure Cotton Dupatta",
+      brand: "Parampara Threads",
+      companyId: parampara._id,
+      organizationId: org._id,
+      category: "Kota Doria",
+      price: 1450,
+      mrp: 1950,
+      priceRange: "₹1,450 – ₹1,950",
+      moq: "20 Pieces (Wholesale)",
+      size: "2.5m Length x 36 Inches Width",
+      material: "Pure Cotton-Silk Kota Doria Weave",
+      materialComposition: "Pure Cotton-Silk Kota Doria Weave",
+      finish: "White Silk Thread Embroidery & Tassels",
+      application: "Layering over Festive Kurtas, Lehengas & Fusion Ensembles",
+      useApplication: "Layering over Festive Kurtas, Lehengas & Fusion Ensembles",
+      verifiedCopy: true,
+      stock: 900,
+      image: "/assets/kota-doria/red-kota-doria-cotton-hand-embroidered-lucknowi-chikankari-dupatta-19-131.jpg",
+      shortDescription: "Festive ruby red sheer dupatta ornamented with white silk thread embroidery and handcrafted border finish.",
+      description: "Festive ruby red sheer dupatta ornamented with white silk thread embroidery and handcrafted border finish.",
+      technicalSpecifications: [
+        { key: "Dimensions", value: "2.5m x 36 Inches" },
+        { key: "Weight", value: "95 grams" }
       ],
       status: "approved"
     },

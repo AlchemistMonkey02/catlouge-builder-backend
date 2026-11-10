@@ -55,7 +55,8 @@ const localAssets = path.join(__dirname, "public/assets");
 const clientAssets = path.join(__dirname, "../client/public/assets");
 if (fs.existsSync(localAssets)) {
   app.use("/assets", express.static(localAssets));
-} else if (fs.existsSync(clientAssets)) {
+}
+if (fs.existsSync(clientAssets)) {
   app.use("/assets", express.static(clientAssets));
 }
 

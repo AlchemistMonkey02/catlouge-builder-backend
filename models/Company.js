@@ -55,6 +55,41 @@ const companySchema = new mongoose.Schema(
       type: String,
       default: "General",
     },
+    district: {
+      type: String,
+      default: "Kota",
+      trim: true,
+    },
+    state: {
+      type: String,
+      default: "Rajasthan",
+      trim: true,
+    },
+    odopProduct: {
+      type: String,
+      default: "Kota Doria",
+      trim: true,
+    },
+    enterpriseType: {
+      type: String,
+      default: "ODOP Certified Enterprise",
+      trim: true,
+    },
+    whatsappNumber: {
+      type: String,
+      default: "+91 94600 77112",
+      trim: true,
+    },
+    giTagNumber: {
+      type: String,
+      default: "GI Tag No. 37",
+      trim: true,
+    },
+    udyamNumber: {
+      type: String,
+      default: "UDYAM-RJ-20-0012345",
+      trim: true,
+    },
     isDefault: {
       type: Boolean,
       default: false,

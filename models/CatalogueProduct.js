@@ -146,6 +146,30 @@ const catalogueProductSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    finish: {
+      type: String,
+      default: "",
+    },
+    application: {
+      type: String,
+      default: "",
+    },
+    useApplication: {
+      type: String,
+      default: "",
+    },
+    moq: {
+      type: String,
+      default: "10 Pieces",
+    },
+    priceRange: {
+      type: String,
+      default: "",
+    },
+    verifiedCopy: {
+      type: Boolean,
+      default: true,
+    },
     style: {
       type: String,
       default: "",
