@@ -6,27 +6,106 @@ const DEFAULT_COMPANIES = [
   {
     name: "Supreme Granite & Stones",
     tagline: "Natural • Durable • Timeless",
-    industry: "Granite & Natural Stone",
+    industry: "Kota Stone Architectural Mining & Paving",
+    district: "Jhalawar, Rajasthan",
+    state: "Rajasthan",
+    odopProduct: "Kota Stone",
+    enterpriseType: "ODOP Certified Enterprise",
     logoUrl: "/assets/reference/p1_2.png",
     brandColors: { primary: "#4E5C43", secondary: "#1C1917", accent: "#C5A059" },
     contact: {
       email: "info@supremestones.in",
       phone: "+91 9066804666",
       website: "https://www.supremestones.in",
-      address: "15 16-1A, 21st Mile Stone, Malle Nalsandra, Jigani, Nallasandra, Karnataka – 560083",
+      address: "RIICO Industrial Area, Suket, Jhalawar, Rajasthan – 326514",
     },
     qrLinks: {
       businessProfile: "https://www.supremestones.in/catalogue",
       whatsapp: "https://wa.me/919066804666",
       website: "https://www.supremestones.in",
-      location: "https://maps.google.com/?q=15+16-1A+21st+Mile+Stone+Malle+Nalsandra+Jigani+Karnataka",
+      location: "https://maps.google.com/?q=Suket+Jhalawar+Rajasthan",
       instagram: "https://instagram.com/supremestones",
       custom: "",
       customLabel: "Scan to Order",
     },
-    legal: { gstNumber: "29AAGCS1234F1Z9", taxId: "PAN-SUPR1234S", currency: "INR" },
+    legal: { gstNumber: "08AAGCS1234F1Z9", taxId: "PAN-SUPR1234S", currency: "INR" },
     wholesaleTerms: "Nationwide Coverage. Calibrated and box packed. Customized CNC patterns, surface finishes, and sizes tailored to residential, commercial, and landscaping projects.",
     isDefault: true,
+  },
+  {
+    name: "Malwa Agro Fresh & Garlic Exports",
+    tagline: "Farm-Fresh High-Allicin Cured Garlic Bulbs",
+    industry: "Garlic Agro-Commodity & Exports",
+    district: "Baran, Rajasthan",
+    state: "Rajasthan",
+    odopProduct: "Garlic",
+    enterpriseType: "ODOP Certified Producer",
+    logoUrl: "/assets/garlic/garlic-01.jpeg",
+    brandColors: { primary: "#15803d", secondary: "#14532d", accent: "#f59e0b" },
+    contact: {
+      email: "export@malwa-garlic.in",
+      phone: "+91 94140 12345",
+      website: "https://www.malwa-garlic.in",
+      address: "Baran Krishi Upaj Mandi, Industrial Yard, Baran, Rajasthan – 325205",
+    },
+    qrLinks: {
+      businessProfile: "https://www.malwa-garlic.in/odop",
+      whatsapp: "https://wa.me/919414012345",
+      website: "https://www.malwa-garlic.in",
+    },
+    legal: { gstNumber: "08AABCM5678G1Z3", taxId: "PAN-MLWA5678B", currency: "INR" },
+    wholesaleTerms: "Export & wholesale lots in 25kg & 50kg ventilated mesh bags. Containerized reefer shipping available.",
+    isDefault: false,
+  },
+  {
+    name: "Parampara Threads",
+    tagline: "GI Certified Gossamer Handloom Drapes",
+    industry: "Kota Doria Handlooms & Sarees",
+    district: "Kota, Rajasthan",
+    state: "Rajasthan",
+    odopProduct: "Kota Doria",
+    enterpriseType: "ODOP Artisan Guild",
+    logoUrl: "/assets/kota-doria/bagru-hand-block-print-kota-doria-cotton-natural-dyed-3pc-unstitched-602.jpg",
+    brandColors: { primary: "#be185d", secondary: "#831843", accent: "#f59e0b" },
+    contact: {
+      email: "concierge@kotadoria-royal.in",
+      phone: "+91 94600 77112",
+      website: "https://www.kaithunkotadoria.org",
+      address: "Bunkar Seva Kendra Road, Kaithun, Kota District, Rajasthan – 325001",
+    },
+    qrLinks: {
+      businessProfile: "https://www.kaithunkotadoria.org/collection",
+      whatsapp: "https://wa.me/919460077112",
+      website: "https://www.kaithunkotadoria.org",
+    },
+    legal: { gstNumber: "08AAAKK3344D1Z2", taxId: "PAN-PRMP3344K", currency: "INR" },
+    wholesaleTerms: "Direct weaver master-craft drapes. Authentic square khat GI benchmark with Tested Gold Zari.",
+    isDefault: false,
+  },
+  {
+    name: "Royal Heritage Sandstones",
+    tagline: "Sedimentary Quartz Sandstone Mining & Architectural Cladding",
+    industry: "Heritage Sandstone Mining & Architectural Mining",
+    district: "Bundi, Rajasthan",
+    state: "Rajasthan",
+    odopProduct: "Sandstone",
+    enterpriseType: "ODOP Quarry Enterprise",
+    logoUrl: "/assets/sand-stone/Agra-Red-Sandstone-Sandblasted.jpg",
+    brandColors: { primary: "#c2410c", secondary: "#7c2d12", accent: "#eab308" },
+    contact: {
+      email: "quarry@bundisandstone.in",
+      phone: "+91 94141 99887",
+      website: "https://www.bundisandstone.in",
+      address: "Bundi Sandstone Cluster, RIICO Phase II, Bundi, Rajasthan – 323001",
+    },
+    qrLinks: {
+      businessProfile: "https://www.bundisandstone.in/quarry",
+      whatsapp: "https://wa.me/919414199887",
+      website: "https://www.bundisandstone.in",
+    },
+    legal: { gstNumber: "08AABCR9911P1Z4", taxId: "PAN-RYAL9911C", currency: "INR" },
+    wholesaleTerms: "Truckload quarry slabs and sawn calibrated tiles for commercial facade cladding and landscape paving.",
+    isDefault: false,
   },
   {
     name: "ai Audio Innovations",
@@ -137,10 +216,45 @@ const getCompanies = async (req, res, next) => {
 
 const createCompany = async (req, res, next) => {
   try {
-    const { name, tagline, logoUrl, brandColors, contact, legal, wholesaleTerms, industry } = req.body;
+    const {
+      name,
+      tagline,
+      logoUrl,
+      brandColors,
+      contact,
+      legal,
+      wholesaleTerms,
+      industry,
+      district,
+      state,
+      odopProduct,
+      enterpriseType,
+      whatsappNumber,
+      giTagNumber,
+      udyamNumber,
+    } = req.body;
 
     if (!name) {
       return res.status(400).json({ success: false, message: "Company name is required" });
+    }
+
+    let finalDistrict = district;
+    let finalOdop = odopProduct;
+
+    if (!finalDistrict || finalDistrict === "India") {
+      if (finalOdop === "Garlic" || (industry && industry.toLowerCase().includes("garlic"))) {
+        finalDistrict = "Baran, Rajasthan";
+        finalOdop = "Garlic";
+      } else if (finalOdop === "Kota Stone" || (industry && industry.toLowerCase().includes("kota stone"))) {
+        finalDistrict = "Jhalawar, Rajasthan";
+        finalOdop = "Kota Stone";
+      } else if (finalOdop === "Sandstone" || (industry && industry.toLowerCase().includes("sand"))) {
+        finalDistrict = "Bundi, Rajasthan";
+        finalOdop = "Sandstone";
+      } else {
+        finalDistrict = "Kota, Rajasthan";
+        finalOdop = "Kota Doria";
+      }
     }
 
     const company = await Company.create({
@@ -154,6 +268,13 @@ const createCompany = async (req, res, next) => {
       legal: legal || {},
       wholesaleTerms: wholesaleTerms || "Standard B2B terms apply.",
       industry: industry || "General",
+      district: finalDistrict,
+      state: state || "Rajasthan",
+      odopProduct: finalOdop || "Kota Doria",
+      enterpriseType: enterpriseType || "ODOP Certified Enterprise",
+      whatsappNumber: whatsappNumber || (contact && (contact.phone || contact.mobile)) || "+91 94600 77112",
+      giTagNumber: giTagNumber || "",
+      udyamNumber: udyamNumber || "",
     });
 
     await AuditLog.create({
