@@ -57,7 +57,7 @@ const companySchema = new mongoose.Schema(
     },
     district: {
       type: String,
-      default: "Kota",
+      default: "",
       trim: true,
     },
     state: {
@@ -67,7 +67,7 @@ const companySchema = new mongoose.Schema(
     },
     odopProduct: {
       type: String,
-      default: "Kota Doria",
+      default: "",
       trim: true,
     },
     enterpriseType: {
@@ -101,5 +101,42 @@ const companySchema = new mongoose.Schema(
 );
 
 companySchema.index({ organizationId: 1, name: 1 });
+
+companySchema.pre("save", function (next) {
+  const name = (this.name || "").toLowerCase();
+  const ind = (this.industry || "").toLowerCase();
+
+  // If empty or accidental legacy default mismatch:
+  if (!this.odopProduct || (this.odopProduct === "Kota Doria" && (name.includes("garlic") || ind.includes("garlic") || name.includes("stone") || ind.includes("stone")))) {
+    if (name.includes("garlic") || ind.includes("garlic") || ind.includes("lahsun") || ind.includes("agro")) {
+      this.odopProduct = "Garlic";
+      if (!this.district || this.district === "Kota" || this.district === "Kota, Rajasthan") {
+        this.district = "Baran, Rajasthan";
+      }
+    } else if (name.includes("sand") || ind.includes("sand")) {
+      this.odopProduct = "Sandstone";
+      if (!this.district || this.district === "Kota" || this.district === "Kota, Rajasthan") {
+        this.district = "Bundi, Rajasthan";
+      }
+    } else if (name.includes("stone") || ind.includes("stone") || ind.includes("limestone")) {
+      this.odopProduct = "Kota Stone";
+      if (!this.district || this.district === "Kota" || this.district === "Kota, Rajasthan") {
+        this.district = "Jhalawar, Rajasthan";
+      }
+    } else if (name.includes("doria") || ind.includes("doria") || ind.includes("saree") || ind.includes("handloom")) {
+      this.odopProduct = "Kota Doria";
+      if (!this.district) this.district = "Kota, Rajasthan";
+    }
+  }
+
+  if (!this.district) {
+    if (this.odopProduct === "Garlic") this.district = "Baran, Rajasthan";
+    else if (this.odopProduct === "Kota Stone") this.district = "Jhalawar, Rajasthan";
+    else if (this.odopProduct === "Sandstone") this.district = "Bundi, Rajasthan";
+    else if (this.odopProduct === "Kota Doria") this.district = "Kota, Rajasthan";
+  }
+
+  next();
+});
 
 module.exports = mongoose.model("Company", companySchema);

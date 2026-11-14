@@ -177,14 +177,41 @@ const getCompanies = async (req, res, next) => {
   try {
     let companies = await Company.find({ organizationId: req.organizationId });
 
-    // Auto-seed diverse default companies if organization has none
-    if (companies.length === 0) {
-      const seeded = DEFAULT_COMPANIES.map((c) => ({
-        ...c,
-        organizationId: req.organizationId,
-      }));
-      companies = await Company.insertMany(seeded);
-    }
+    // Auto-correct any legacy or missing ODOP product & district mappings
+    companies = companies.map((c) => {
+      const cObj = c.toObject ? c.toObject() : { ...c };
+      const name = (cObj.name || "").toLowerCase();
+      const ind = (cObj.industry || "").toLowerCase();
+      let odop = cObj.odopProduct;
+      let dist = cObj.district;
+
+      if (!odop || (odop === "Kota Doria" && (name.includes("garlic") || ind.includes("garlic") || (name.includes("stone") && !name.includes("sand")) || ind.includes("stone") || name.includes("sand")))) {
+        if (name.includes("garlic") || ind.includes("garlic") || ind.includes("lahsun")) {
+          odop = "Garlic";
+          dist = "Baran, Rajasthan";
+        } else if (name.includes("sand") || ind.includes("sand")) {
+          odop = "Sandstone";
+          dist = "Bundi, Rajasthan";
+        } else if (name.includes("stone") || ind.includes("stone") || ind.includes("limestone")) {
+          odop = "Kota Stone";
+          dist = "Jhalawar, Rajasthan";
+        } else if (name.includes("doria") || ind.includes("doria") || ind.includes("handloom")) {
+          odop = "Kota Doria";
+          dist = "Kota, Rajasthan";
+        }
+      }
+
+      if (!dist || dist === "India") {
+        if (odop === "Garlic") dist = "Baran, Rajasthan";
+        else if (odop === "Kota Stone") dist = "Jhalawar, Rajasthan";
+        else if (odop === "Sandstone") dist = "Bundi, Rajasthan";
+        else if (odop === "Kota Doria") dist = "Kota, Rajasthan";
+      }
+
+      cObj.odopProduct = odop || "Kota Doria";
+      cObj.district = dist || "Kota, Rajasthan";
+      return cObj;
+    });
 
     const priorityKeywords = [
       "garlic",
@@ -241,19 +268,35 @@ const createCompany = async (req, res, next) => {
     let finalDistrict = district;
     let finalOdop = odopProduct;
 
-    if (!finalDistrict || finalDistrict === "India") {
-      if (finalOdop === "Garlic" || (industry && industry.toLowerCase().includes("garlic"))) {
+    const lowerName = (name || "").toLowerCase();
+    const lowerInd = (industry || "").toLowerCase();
+
+    // If odop is empty or set to legacy default "Kota Doria" while name/ind is clearly a different craft:
+    if (!finalOdop || (finalOdop === "Kota Doria" && (lowerName.includes("garlic") || lowerInd.includes("garlic") || (lowerName.includes("stone") && !lowerName.includes("sand")) || (lowerInd.includes("stone") && !lowerInd.includes("sand")) || lowerName.includes("sand")))) {
+      if (lowerName.includes("garlic") || lowerInd.includes("garlic") || lowerInd.includes("lahsun")) {
         finalDistrict = "Baran, Rajasthan";
         finalOdop = "Garlic";
-      } else if (finalOdop === "Kota Stone" || (industry && industry.toLowerCase().includes("kota stone"))) {
-        finalDistrict = "Jhalawar, Rajasthan";
-        finalOdop = "Kota Stone";
-      } else if (finalOdop === "Sandstone" || (industry && industry.toLowerCase().includes("sand"))) {
+      } else if (lowerName.includes("sand") || lowerInd.includes("sand")) {
         finalDistrict = "Bundi, Rajasthan";
         finalOdop = "Sandstone";
-      } else {
+      } else if (lowerName.includes("stone") || lowerInd.includes("stone") || lowerInd.includes("limestone")) {
+        finalDistrict = "Jhalawar, Rajasthan";
+        finalOdop = "Kota Stone";
+      } else if (lowerName.includes("doria") || lowerInd.includes("doria") || lowerInd.includes("saree") || lowerInd.includes("handloom")) {
         finalDistrict = "Kota, Rajasthan";
         finalOdop = "Kota Doria";
+      }
+    }
+
+    if (!finalDistrict || finalDistrict === "India") {
+      if (finalOdop === "Garlic") {
+        finalDistrict = "Baran, Rajasthan";
+      } else if (finalOdop === "Kota Stone") {
+        finalDistrict = "Jhalawar, Rajasthan";
+      } else if (finalOdop === "Sandstone") {
+        finalDistrict = "Bundi, Rajasthan";
+      } else {
+        finalDistrict = "Kota, Rajasthan";
       }
     }
 
@@ -295,9 +338,26 @@ const createCompany = async (req, res, next) => {
 
 const updateCompany = async (req, res, next) => {
   try {
+    const updateData = { ...req.body };
+    const lowerName = (updateData.name || "").toLowerCase();
+    const lowerInd = (updateData.industry || "").toLowerCase();
+
+    if (updateData.odopProduct === "Kota Doria" && (lowerName.includes("garlic") || lowerInd.includes("garlic") || (lowerName.includes("stone") && !lowerName.includes("sand")) || (lowerInd.includes("stone") && !lowerInd.includes("sand")) || lowerName.includes("sand"))) {
+      if (lowerName.includes("garlic") || lowerInd.includes("garlic") || lowerInd.includes("lahsun")) {
+        updateData.district = "Baran, Rajasthan";
+        updateData.odopProduct = "Garlic";
+      } else if (lowerName.includes("sand") || lowerInd.includes("sand")) {
+        updateData.district = "Bundi, Rajasthan";
+        updateData.odopProduct = "Sandstone";
+      } else if (lowerName.includes("stone") || lowerInd.includes("stone") || lowerInd.includes("limestone")) {
+        updateData.district = "Jhalawar, Rajasthan";
+        updateData.odopProduct = "Kota Stone";
+      }
+    }
+
     const company = await Company.findOneAndUpdate(
       { _id: req.params.id, organizationId: req.organizationId },
-      req.body,
+      updateData,
       { new: true }
     );
 

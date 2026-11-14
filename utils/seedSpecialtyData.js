@@ -22,6 +22,10 @@ const run = async () => {
     name: "Malwa Fresh Garlic & Agro Exports",
     tagline: "100% Organic Farm Harvest • Grade-A Sizing • Global Cold-Chain Export",
     industry: "Garlic Specialty & Agro Commodities",
+    district: "Baran, Rajasthan",
+    state: "Rajasthan",
+    odopProduct: "Garlic",
+    enterpriseType: "ODOP Certified Producer",
     logoUrl: "https://images.unsplash.com/photo-1615485500704-8e990f9900f7?w=300",
     brandColors: { primary: "#1b4332", secondary: "#2d6a4f", accent: "#d4af37" },
     contact: {
@@ -66,6 +70,10 @@ const run = async () => {
     name: "Supreme Kota Stone & Minerals",
     tagline: "Natural • Durable • Architectural Precision Slabs",
     industry: "Kota Stone & Calibrated Limestone",
+    district: "Jhalawar, Rajasthan",
+    state: "Rajasthan",
+    odopProduct: "Kota Stone",
+    enterpriseType: "ODOP Certified Enterprise",
     logoUrl: "/assets/reference/p1_2.png",
     brandColors: { primary: "#3f4a3c", secondary: "#1c1917", accent: "#c5a059" },
     contact: {
@@ -110,6 +118,10 @@ const run = async () => {
     name: "Marwar Royal Sandstone & Facades",
     tagline: "Imperial Desert Gold • Exotic Veins • Weather-Resistant Cladding",
     industry: "Sandstone Quarrying & Architectural Carving",
+    district: "Bundi, Rajasthan",
+    state: "Rajasthan",
+    odopProduct: "Sandstone",
+    enterpriseType: "ODOP Quarry Enterprise",
     logoUrl: "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=300",
     brandColors: { primary: "#c27803", secondary: "#4a2c0f", accent: "#e2cfaf" },
     contact: {
