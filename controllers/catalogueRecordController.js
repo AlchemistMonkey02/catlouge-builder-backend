@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const CatalogueRecord = require("../models/CatalogueRecord");
 
 /**
@@ -6,11 +7,14 @@ const CatalogueRecord = require("../models/CatalogueRecord");
  */
 exports.getRecords = async (req, res) => {
   try {
-    const { district, product, status, search } = req.query;
+    const { district, product, status, search, companyId } = req.query;
     const query = {};
 
     if (req.organizationId) {
       query.organizationId = req.organizationId;
+    }
+    if (companyId) {
+      query.companyId = companyId;
     }
     if (district) query.district = new RegExp(district, "i");
     if (product) query.product = new RegExp(product, "i");
@@ -39,15 +43,52 @@ exports.getRecords = async (req, res) => {
 };
 
 /**
- * @desc Get single catalogue record by ID
+ * @desc Get single catalogue record by ID or slug (publicly viewable)
  * @route GET /api/catalogue-records/:id
  */
 exports.getRecordById = async (req, res) => {
   try {
+    const idOrSlug = req.params.id;
+    let record = null;
+    if (mongoose.Types.ObjectId.isValid(idOrSlug)) {
+      record = await CatalogueRecord.findById(idOrSlug);
+    }
+    if (!record) {
+      record = await CatalogueRecord.findOne({ liveSlug: idOrSlug });
+    }
+    if (!record) {
+      record = await CatalogueRecord.findOne({
+        $or: [
+          { liveSlug: new RegExp(`^${idOrSlug}$`, "i") },
+          { ent_name: new RegExp(`^${idOrSlug.replace(/-/g, " ")}$`, "i") }
+        ]
+      });
+    }
+    if (!record) {
+      return res.status(404).json({ success: false, message: "Catalogue record not found" });
+    }
+    res.json({ success: true, data: record });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+/**
+ * @desc Publish catalogue record live with full HTML and public share link
+ * @route POST /api/catalogue-records/:id/publish-live
+ */
+exports.publishLiveRecord = async (req, res) => {
+  try {
     const record = await CatalogueRecord.findById(req.params.id);
     if (!record) {
-      return res.status(404).json({ success: false, message: "Record not found" });
+      return res.status(404).json({ success: false, message: "Catalogue record not found" });
     }
+    record.isLive = true;
+    record.status = "final";
+    if (req.body.pagesHtml) record.pagesHtml = req.body.pagesHtml;
+    if (req.body.liveUrl) record.liveUrl = req.body.liveUrl;
+    if (req.body.liveSlug) record.liveSlug = req.body.liveSlug;
+    await record.save();
     res.json({ success: true, data: record });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });

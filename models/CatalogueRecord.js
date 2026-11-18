@@ -62,8 +62,26 @@ const catalogueRecordSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["draft", "final"],
+      enum: ["draft", "final", "published", "live", "approved"],
       default: "draft",
+    },
+    isLive: {
+      type: Boolean,
+      default: false,
+    },
+    liveUrl: {
+      type: String,
+      default: "",
+    },
+    liveSlug: {
+      type: String,
+      default: "",
+      trim: true,
+      index: true,
+    },
+    pagesHtml: {
+      type: [String],
+      default: [],
     },
     form_json: {
       type: mongoose.Schema.Types.Mixed,

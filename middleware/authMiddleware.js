@@ -62,7 +62,7 @@ const tenantContext = async (req, res, next) => {
         }
       } catch (err) {
         // Fall back to default organization if token is invalid or expired
-        console.warn("Invalid JWT token provided, falling back to default tenant:", err.message);
+        res.setHeader("X-Token-Invalid", "true");
       }
     }
 

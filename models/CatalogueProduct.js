@@ -146,6 +146,14 @@ const catalogueProductSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    thickness: {
+      type: String,
+      default: "",
+    },
+    fabricWeight: {
+      type: String,
+      default: "",
+    },
     finish: {
       type: String,
       default: "",
@@ -196,6 +204,16 @@ const catalogueProductSchema = new mongoose.Schema(
       required: [true, "Selling price is required"],
       min: [0, "Price must be positive"],
       index: true,
+    },
+    unit: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    pricingUnit: {
+      type: String,
+      default: "",
+      trim: true,
     },
     mrp: {
       type: Number,

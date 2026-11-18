@@ -1010,6 +1010,44 @@ const seedDatabase = async () => {
       }
     }
 
+    // Clone authentic category products for secondary companies/regional aliases
+    const secondaryCompanyLinks = [
+      { targetComp: companyMap["Malwa Fresh Garlic & Agro Exports"], sourceComp: malwaGarlic, prefix: "MFG" },
+      { targetComp: companyMap["Supreme Kota Stone & Minerals"], sourceComp: supreme, prefix: "SKM" },
+      { targetComp: companyMap["Kaithun Royal Kota Doria Handlooms"], sourceComp: parampara, prefix: "KRH" },
+      { targetComp: companyMap["Marwar Royal Sandstone & Facades"], sourceComp: royalSandstone, prefix: "MRS" },
+    ];
+
+    const extraKotaDoria = await Company.findOne({ organizationId: org._id, name: /^kota doria$/i });
+    if (extraKotaDoria) {
+      secondaryCompanyLinks.push({ targetComp: extraKotaDoria, sourceComp: parampara, prefix: "KTD" });
+    }
+
+    for (const link of secondaryCompanyLinks) {
+      if (!link.targetComp || !link.sourceComp) continue;
+      const sourceProds = await CatalogueProduct.find({ organizationId: org._id, companyId: link.sourceComp._id }).lean();
+      for (const sp of sourceProds) {
+        const newSku = `${link.prefix}-${sp.sku}`;
+        let existing = await CatalogueProduct.findOne({ organizationId: org._id, sku: newSku });
+        const cloneData = {
+          ...sp,
+          sku: newSku,
+          brand: link.targetComp.name,
+          companyId: link.targetComp._id,
+        };
+        delete cloneData._id;
+        delete cloneData.createdAt;
+        delete cloneData.updatedAt;
+        if (!existing) {
+          await CatalogueProduct.create({ ...cloneData, organizationId: org._id });
+          console.log(`  ➕ Linked Product for "${link.targetComp.name}": [${newSku}] ${sp.name}`);
+        } else {
+          Object.assign(existing, cloneData);
+          await existing.save();
+        }
+      }
+    }
+
     // 4. Pre-saved Dynamic Catalogue Studio Records (ODOP / Studio Database)
     console.log("\n📑 Seeding Pre-configured Dynamic Catalogue Records...");
     const dynamicRecordsToSeed = [

@@ -94,6 +94,10 @@ const companySchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    dataBank: {
+      type: mongoose.Schema.Types.Mixed,
+      default: null,
+    },
   },
   {
     timestamps: true,
@@ -106,34 +110,24 @@ companySchema.pre("save", function (next) {
   const name = (this.name || "").toLowerCase();
   const ind = (this.industry || "").toLowerCase();
 
-  // If empty or accidental legacy default mismatch:
-  if (!this.odopProduct || (this.odopProduct === "Kota Doria" && (name.includes("garlic") || ind.includes("garlic") || name.includes("stone") || ind.includes("stone")))) {
+  // If odop was mistakenly defaulted to "Kota Doria" on a non-Kota company:
+  if (this.odopProduct === "Kota Doria" && (name.includes("garlic") || ind.includes("garlic") || name.includes("stone") || ind.includes("stone") || name.includes("sand") || ind.includes("sand"))) {
     if (name.includes("garlic") || ind.includes("garlic") || ind.includes("lahsun") || ind.includes("agro")) {
       this.odopProduct = "Garlic";
-      if (!this.district || this.district === "Kota" || this.district === "Kota, Rajasthan") {
-        this.district = "Baran, Rajasthan";
-      }
     } else if (name.includes("sand") || ind.includes("sand")) {
       this.odopProduct = "Sandstone";
-      if (!this.district || this.district === "Kota" || this.district === "Kota, Rajasthan") {
-        this.district = "Bundi, Rajasthan";
-      }
     } else if (name.includes("stone") || ind.includes("stone") || ind.includes("limestone")) {
       this.odopProduct = "Kota Stone";
-      if (!this.district || this.district === "Kota" || this.district === "Kota, Rajasthan") {
-        this.district = "Jhalawar, Rajasthan";
-      }
-    } else if (name.includes("doria") || ind.includes("doria") || ind.includes("saree") || ind.includes("handloom")) {
-      this.odopProduct = "Kota Doria";
-      if (!this.district) this.district = "Kota, Rajasthan";
     }
   }
 
-  if (!this.district) {
-    if (this.odopProduct === "Garlic") this.district = "Baran, Rajasthan";
-    else if (this.odopProduct === "Kota Stone") this.district = "Jhalawar, Rajasthan";
-    else if (this.odopProduct === "Sandstone") this.district = "Bundi, Rajasthan";
-    else if (this.odopProduct === "Kota Doria") this.district = "Kota, Rajasthan";
+  // If district was mistakenly defaulted to "Kota" or "Kota, Rajasthan" on a non-Kota company:
+  if ((this.district === "Kota" || this.district === "Kota, Rajasthan" || !this.district) && (name.includes("garlic") || name.includes("sand") || (name.includes("stone") && !name.includes("kota stone")))) {
+    if (name.includes("garlic") || ind.includes("garlic")) {
+      this.district = "Baran, Rajasthan";
+    } else if (name.includes("sand") || ind.includes("sand")) {
+      this.district = "Bundi, Rajasthan";
+    }
   }
 
   next();

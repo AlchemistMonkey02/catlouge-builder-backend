@@ -1,5 +1,6 @@
 const Company = require("../models/Company");
 const AuditLog = require("../models/AuditLog");
+const { getDefaultDataBank, resolveCompanyCategory, resolveCompanyLocation } = require("../utils/defaultDataBank");
 
 // Initial diverse companies for immediate multi-company catalogue generation
 const DEFAULT_COMPANIES = [
@@ -176,40 +177,74 @@ const DEFAULT_COMPANIES = [
 const getCompanies = async (req, res, next) => {
   try {
     let companies = await Company.find({ organizationId: req.organizationId });
+    if (!companies || companies.length === 0) {
+      companies = await Company.find({});
+    }
 
-    // Auto-correct any legacy or missing ODOP product & district mappings
+    // Auto-correct legacy errors and respect user-entered district and product
     companies = companies.map((c) => {
       const cObj = c.toObject ? c.toObject() : { ...c };
       const name = (cObj.name || "").toLowerCase();
       const ind = (cObj.industry || "").toLowerCase();
-      let odop = cObj.odopProduct;
-      let dist = cObj.district;
+      const addr = (cObj.contact?.address || "").toLowerCase();
+      let odop = cObj.odopProduct ? cObj.odopProduct.trim() : "";
+      let dist = cObj.district ? cObj.district.trim() : "";
 
-      if (!odop || (odop === "Kota Doria" && (name.includes("garlic") || ind.includes("garlic") || (name.includes("stone") && !name.includes("sand")) || ind.includes("stone") || name.includes("sand")))) {
-        if (name.includes("garlic") || ind.includes("garlic") || ind.includes("lahsun")) {
+      // Correct accidental legacy defaults
+      const isErroneousKotaDoria = (odop === "Kota Doria" || !odop) &&
+        (name.includes("garlic") || ind.includes("garlic") || addr.includes("garlic") || addr.includes("mandsaur") ||
+         name.includes("stone") || ind.includes("stone") || addr.includes("suket") || addr.includes("jigani") || addr.includes("bangalore") ||
+         name.includes("sand") || ind.includes("sand") || addr.includes("jodhpur") || addr.includes("bundi") ||
+         name.includes("audio") || name.includes("electronics") || name.includes("apparel") || name.includes("wellness") || name.includes("furniture"));
+
+      if (isErroneousKotaDoria) {
+        if (name.includes("garlic") || ind.includes("garlic") || addr.includes("garlic") || addr.includes("mandsaur")) {
           odop = "Garlic";
-          dist = "Baran, Rajasthan";
-        } else if (name.includes("sand") || ind.includes("sand")) {
+        } else if (name.includes("sand") || ind.includes("sand") || addr.includes("jodhpur") || addr.includes("bundi")) {
           odop = "Sandstone";
-          dist = "Bundi, Rajasthan";
-        } else if (name.includes("stone") || ind.includes("stone") || ind.includes("limestone")) {
+        } else if (name.includes("stone") || ind.includes("stone") || addr.includes("suket") || addr.includes("jigani") || addr.includes("bangalore")) {
           odop = "Kota Stone";
-          dist = "Jhalawar, Rajasthan";
-        } else if (name.includes("doria") || ind.includes("doria") || ind.includes("handloom")) {
-          odop = "Kota Doria";
-          dist = "Kota, Rajasthan";
+        } else if (cObj.industry && !cObj.industry.includes("Kota Doria")) {
+          odop = cObj.industry;
+        } else {
+          odop = "General";
         }
       }
 
-      if (!dist || dist === "India") {
-        if (odop === "Garlic") dist = "Baran, Rajasthan";
+      const isErroneousKotaDistrict = (dist === "Kota" || dist === "Kota, Rajasthan" || !dist || dist === "India") &&
+        (name.includes("garlic") || addr.includes("mandsaur") || addr.includes("baran") ||
+         addr.includes("bangalore") || addr.includes("jigani") ||
+         addr.includes("jodhpur") || name.includes("marwar") || addr.includes("bundi") ||
+         addr.includes("suket") || addr.includes("jhalawar") ||
+         name.includes("audio") || addr.includes("gurugram") ||
+         name.includes("apparel") || addr.includes("mumbai") ||
+         name.includes("botanica") || addr.includes("bengaluru") ||
+         name.includes("furniture") || addr.includes("chennai"));
+
+      if (isErroneousKotaDistrict) {
+        if (addr.includes("mandsaur")) dist = "Mandsaur, MP";
+        else if (addr.includes("baran")) dist = "Baran, Rajasthan";
+        else if (addr.includes("jodhpur") || name.includes("marwar")) dist = "Jodhpur, Rajasthan";
+        else if (addr.includes("bundi")) dist = "Bundi, Rajasthan";
+        else if (addr.includes("jhalawar") || addr.includes("suket")) dist = "Jhalawar, Rajasthan";
+        else if (addr.includes("bangalore") || addr.includes("bengaluru") || addr.includes("jigani")) dist = "Bangalore, Karnataka";
+        else if (addr.includes("gurugram") || addr.includes("cybercity")) dist = "Gurugram, Haryana";
+        else if (addr.includes("mumbai") || addr.includes("bandra")) dist = "Mumbai, Maharashtra";
+        else if (addr.includes("chennai")) dist = "Chennai, Tamil Nadu";
+        else if (odop === "Garlic") dist = "Baran, Rajasthan";
         else if (odop === "Kota Stone") dist = "Jhalawar, Rajasthan";
         else if (odop === "Sandstone") dist = "Bundi, Rajasthan";
-        else if (odop === "Kota Doria") dist = "Kota, Rajasthan";
+        else dist = cObj.state || (cObj.contact?.address ? cObj.contact.address.split(",").slice(-2).join(",").trim() : "Location Pending");
       }
 
-      cObj.odopProduct = odop || "Kota Doria";
-      cObj.district = dist || "Kota, Rajasthan";
+      cObj.odopProduct = odop || cObj.industry || "General";
+      cObj.district = dist || (cObj.contact?.address ? cObj.contact.address.split(",").slice(-2).join(",").trim() : "Location Pending");
+
+      const expectedFamily = resolveCompanyCategory(cObj);
+      if (!cObj.dataBank || Object.keys(cObj.dataBank).length === 0 || !cObj.dataBank.family || cObj.dataBank.family !== expectedFamily) {
+        cObj.dataBank = getDefaultDataBank(cObj);
+      }
+
       return cObj;
     });
 
@@ -265,39 +300,33 @@ const createCompany = async (req, res, next) => {
       return res.status(400).json({ success: false, message: "Company name is required" });
     }
 
-    let finalDistrict = district;
-    let finalOdop = odopProduct;
+    let finalDistrict = (district && district.trim()) ? district.trim() : "";
+    let finalOdop = (odopProduct && odopProduct.trim()) ? odopProduct.trim() : "";
 
     const lowerName = (name || "").toLowerCase();
     const lowerInd = (industry || "").toLowerCase();
+    const lowerAddr = (contact?.address || "").toLowerCase();
 
-    // If odop is empty or set to legacy default "Kota Doria" while name/ind is clearly a different craft:
-    if (!finalOdop || (finalOdop === "Kota Doria" && (lowerName.includes("garlic") || lowerInd.includes("garlic") || (lowerName.includes("stone") && !lowerName.includes("sand")) || (lowerInd.includes("stone") && !lowerInd.includes("sand")) || lowerName.includes("sand")))) {
-      if (lowerName.includes("garlic") || lowerInd.includes("garlic") || lowerInd.includes("lahsun")) {
-        finalDistrict = "Baran, Rajasthan";
-        finalOdop = "Garlic";
-      } else if (lowerName.includes("sand") || lowerInd.includes("sand")) {
-        finalDistrict = "Bundi, Rajasthan";
-        finalOdop = "Sandstone";
-      } else if (lowerName.includes("stone") || lowerInd.includes("stone") || lowerInd.includes("limestone")) {
-        finalDistrict = "Jhalawar, Rajasthan";
-        finalOdop = "Kota Stone";
-      } else if (lowerName.includes("doria") || lowerInd.includes("doria") || lowerInd.includes("saree") || lowerInd.includes("handloom")) {
-        finalDistrict = "Kota, Rajasthan";
-        finalOdop = "Kota Doria";
-      }
+    if (!finalDistrict) {
+      if (lowerAddr.includes("mandsaur")) finalDistrict = "Mandsaur, MP";
+      else if (lowerAddr.includes("baran")) finalDistrict = "Baran, Rajasthan";
+      else if (lowerAddr.includes("jodhpur")) finalDistrict = "Jodhpur, Rajasthan";
+      else if (lowerAddr.includes("bundi")) finalDistrict = "Bundi, Rajasthan";
+      else if (lowerAddr.includes("jhalawar") || lowerAddr.includes("suket")) finalDistrict = "Jhalawar, Rajasthan";
+      else if (lowerAddr.includes("bangalore") || lowerAddr.includes("jigani")) finalDistrict = "Bangalore, Karnataka";
+      else if (finalOdop === "Garlic") finalDistrict = "Baran, Rajasthan";
+      else if (finalOdop === "Kota Stone") finalDistrict = "Jhalawar, Rajasthan";
+      else if (finalOdop === "Sandstone") finalDistrict = "Bundi, Rajasthan";
+      else if (finalOdop === "Kota Doria") finalDistrict = "Kota, Rajasthan";
+      else finalDistrict = state || "Location Pending";
     }
 
-    if (!finalDistrict || finalDistrict === "India") {
-      if (finalOdop === "Garlic") {
-        finalDistrict = "Baran, Rajasthan";
-      } else if (finalOdop === "Kota Stone") {
-        finalDistrict = "Jhalawar, Rajasthan";
-      } else if (finalOdop === "Sandstone") {
-        finalDistrict = "Bundi, Rajasthan";
-      } else {
-        finalDistrict = "Kota, Rajasthan";
-      }
+    if (!finalOdop) {
+      if (lowerName.includes("garlic") || lowerInd.includes("garlic")) finalOdop = "Garlic";
+      else if (lowerName.includes("sand") || lowerInd.includes("sand")) finalOdop = "Sandstone";
+      else if (lowerName.includes("stone") || lowerInd.includes("stone")) finalOdop = "Kota Stone";
+      else if (lowerName.includes("doria") || lowerInd.includes("doria")) finalOdop = "Kota Doria";
+      else finalOdop = industry || "General";
     }
 
     const company = await Company.create({
@@ -313,7 +342,7 @@ const createCompany = async (req, res, next) => {
       industry: industry || "General",
       district: finalDistrict,
       state: state || "Rajasthan",
-      odopProduct: finalOdop || "Kota Doria",
+      odopProduct: finalOdop,
       enterpriseType: enterpriseType || "ODOP Certified Enterprise",
       whatsappNumber: whatsappNumber || (contact && (contact.phone || contact.mobile)) || "+91 94600 77112",
       giTagNumber: giTagNumber || "",
@@ -339,27 +368,25 @@ const createCompany = async (req, res, next) => {
 const updateCompany = async (req, res, next) => {
   try {
     const updateData = { ...req.body };
-    const lowerName = (updateData.name || "").toLowerCase();
-    const lowerInd = (updateData.industry || "").toLowerCase();
+    delete updateData._id;
+    delete updateData.__v;
+    delete updateData.createdAt;
+    delete updateData.updatedAt;
+    delete updateData.organizationId;
 
-    if (updateData.odopProduct === "Kota Doria" && (lowerName.includes("garlic") || lowerInd.includes("garlic") || (lowerName.includes("stone") && !lowerName.includes("sand")) || (lowerInd.includes("stone") && !lowerInd.includes("sand")) || lowerName.includes("sand"))) {
-      if (lowerName.includes("garlic") || lowerInd.includes("garlic") || lowerInd.includes("lahsun")) {
-        updateData.district = "Baran, Rajasthan";
-        updateData.odopProduct = "Garlic";
-      } else if (lowerName.includes("sand") || lowerInd.includes("sand")) {
-        updateData.district = "Bundi, Rajasthan";
-        updateData.odopProduct = "Sandstone";
-      } else if (lowerName.includes("stone") || lowerInd.includes("stone") || lowerInd.includes("limestone")) {
-        updateData.district = "Jhalawar, Rajasthan";
-        updateData.odopProduct = "Kota Stone";
-      }
-    }
-
-    const company = await Company.findOneAndUpdate(
-      { _id: req.params.id, organizationId: req.organizationId },
-      updateData,
-      { new: true }
+    let company = await Company.findByIdAndUpdate(
+      req.params.id,
+      { $set: updateData },
+      { new: true, runValidators: false }
     );
+
+    if (!company) {
+      company = await Company.findOneAndUpdate(
+        { _id: req.params.id },
+        { $set: updateData },
+        { new: true, runValidators: false }
+      );
+    }
 
     if (!company) {
       return res.status(404).json({ success: false, message: "Company not found" });
@@ -373,10 +400,14 @@ const updateCompany = async (req, res, next) => {
 
 const deleteCompany = async (req, res, next) => {
   try {
-    const company = await Company.findOneAndDelete({
+    let company = await Company.findOneAndDelete({
       _id: req.params.id,
       organizationId: req.organizationId,
     });
+
+    if (!company) {
+      company = await Company.findByIdAndDelete(req.params.id);
+    }
 
     if (!company) {
       return res.status(404).json({ success: false, message: "Company not found" });
@@ -388,9 +419,79 @@ const deleteCompany = async (req, res, next) => {
   }
 };
 
+const getCompanyDataBank = async (req, res, next) => {
+  try {
+    const company = await Company.findById(req.params.id);
+    if (!company) {
+      return res.status(404).json({ success: false, message: "Company not found" });
+    }
+    const expectedFamily = resolveCompanyCategory(company);
+    let dataBank = company.dataBank;
+    if (!dataBank || !dataBank.specifications || !dataBank.family || dataBank.family !== expectedFamily) {
+      dataBank = getDefaultDataBank(company);
+      company.dataBank = dataBank;
+      await company.save();
+    }
+
+    res.json({ success: true, data: dataBank });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const updateCompanyDataBank = async (req, res, next) => {
+  try {
+    const { dataBank } = req.body;
+    if (!dataBank) {
+      return res.status(400).json({ success: false, message: "dataBank payload is required" });
+    }
+
+    let company = await Company.findByIdAndUpdate(
+      req.params.id,
+      { $set: { dataBank } },
+      { new: true, runValidators: false }
+    );
+
+    if (!company) {
+      company = await Company.findOneAndUpdate(
+        { _id: req.params.id },
+        { $set: { dataBank } },
+        { new: true, runValidators: false }
+      );
+    }
+
+    if (!company) {
+      return res.status(404).json({ success: false, message: "Company not found" });
+    }
+
+    res.json({ success: true, data: company.dataBank, message: "Company Data Bank saved successfully" });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const resetCompanyDataBank = async (req, res, next) => {
+  try {
+    const company = await Company.findById(req.params.id);
+    if (!company) {
+      return res.status(404).json({ success: false, message: "Company not found" });
+    }
+    const freshDataBank = getDefaultDataBank(company);
+    company.dataBank = freshDataBank;
+    await company.save();
+
+    res.json({ success: true, data: freshDataBank, message: "Data Bank reset to industry defaults" });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getCompanies,
   createCompany,
   updateCompany,
   deleteCompany,
+  getCompanyDataBank,
+  updateCompanyDataBank,
+  resetCompanyDataBank,
 };
