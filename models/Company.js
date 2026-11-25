@@ -49,7 +49,7 @@ const companySchema = new mongoose.Schema(
     },
     wholesaleTerms: {
       type: String,
-      default: "Minimum Order Quantity (MOQ): 10 units per SKU. Net 30 payment terms available for verified trade partners. Prices exclusive of applicable GST.",
+      default: "Net 30 payment terms available for verified trade partners. Prices exclusive of applicable GST.",
     },
     industry: {
       type: String,

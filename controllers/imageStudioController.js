@@ -463,14 +463,127 @@ const upscaleAndEnhanceImage = async (req, res, next) => {
       const buffer = Buffer.from(arrayBuffer);
       const contentType = response.headers.get("content-type") || "image/jpeg";
       imageBase64 = `data:${contentType};base64,${buffer.toString("base64")}`;
+    } else if (
+      image.startsWith("/assets/") ||
+      image.startsWith("assets/") ||
+      image.startsWith("/uploads/") ||
+      image.startsWith("uploads/")
+    ) {
+      const cleanRel = image.startsWith("/") ? image.slice(1) : image;
+      const clientPublicPath = path.resolve(__dirname, "../../client/public", cleanRel);
+      const serverPublicPath = path.resolve(__dirname, "../public", cleanRel);
+      let targetPath = null;
+      if (fs.existsSync(clientPublicPath)) targetPath = clientPublicPath;
+      else if (fs.existsSync(serverPublicPath)) targetPath = serverPublicPath;
+
+      if (targetPath) {
+        const fileBuf = fs.readFileSync(targetPath);
+        const ext = path.extname(targetPath).toLowerCase();
+        const mime = ext === ".png" ? "image/png" : ext === ".webp" ? "image/webp" : "image/jpeg";
+        imageBase64 = `data:${mime};base64,${fileBuf.toString("base64")}`;
+      }
     }
 
+    const payload = {
+      image: imageBase64,
+      scaleFactor: Number(scaleFactor),
+      sharpness: Number(sharpness),
+      contrast: Number(contrast),
+      saturation: Number(saturation),
+      clarityMode: req.body.clarityMode || "clean_hd",
+      denoise: req.body.denoise !== undefined ? Boolean(req.body.denoise) : true,
+      engine: req.body.engine || "auto",
+      interpolation: req.body.interpolation || "lanczos4",
+    };
+
+    // 1. Check if the high-speed Python FastAPI microservice is running locally (persisted GPU memory)
+    const microserviceUrl = process.env.UPSCALE_SERVICE_URL || "http://127.0.0.1:5020/upscale";
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 20000);
+      const microRes = await fetch(microserviceUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          image: payload.image,
+          scale: payload.scaleFactor,
+          sharpness: payload.sharpness,
+          contrast: payload.contrast,
+          saturation: payload.saturation,
+          clarityMode: payload.clarityMode,
+          denoise: payload.denoise,
+          engine: payload.engine,
+          format: "json",
+        }),
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      if (microRes.ok) {
+        const microData = await microRes.json();
+        if (microData.success && (microData.image || microData.upscaled)) {
+          return res.json({
+            success: true,
+            image: microData.image || microData.upscaled,
+            upscaled: microData.image || microData.upscaled,
+            width: microData.width,
+            height: microData.height,
+            originalWidth: microData.originalWidth,
+            originalHeight: microData.originalHeight,
+            scaleFactor: microData.scaleFactor,
+            engine: microData.engine || payload.engine,
+            stats: microData.stats || {
+              from: `${microData.originalWidth}x${microData.originalHeight}`,
+              to: `${microData.width}x${microData.height}`,
+              scale: `${microData.scaleFactor}x`,
+              engine: microData.engine || payload.engine,
+            },
+          });
+        }
+      }
+    } catch (_) {
+      // Fallback to standalone script execution below
+    }
+
+    // 2. Standalone execution fallback via spawn
     const { spawn } = require("child_process");
     const scriptPath = path.join(__dirname, "../utils/aiUpscale.py");
-    const py = spawn("python", [scriptPath]);
+    const pythonCmd = process.env.PYTHON_BIN || (process.platform === "win32" ? "python" : "python3");
 
     let stdoutData = "";
     let stderrData = "";
+    let responded = false;
+
+    const safeRespond = (status, payload) => {
+      if (responded) return;
+      responded = true;
+      return res.status(status).json(payload);
+    };
+
+    let py;
+    try {
+      py = spawn(pythonCmd, [scriptPath]);
+    } catch (spawnErr) {
+      return safeRespond(500, {
+        success: false,
+        message: `Failed to spawn Python process (${pythonCmd}): ${spawnErr.message}`,
+        hint: "Ensure Python 3 is installed and pythonCmd is configured in environment.",
+      });
+    }
+
+    py.on("error", (err) => {
+      safeRespond(500, {
+        success: false,
+        message: `Python process error (${pythonCmd}): ${err.message}`,
+        hint: "Make sure python3 or python is installed on the server.",
+      });
+    });
+
+    if (py.stdin) {
+      py.stdin.on("error", () => {
+        // Ignore EPIPE if process terminated early
+      });
+    }
 
     py.stdout.on("data", (chunk) => {
       stdoutData += chunk.toString();
@@ -481,10 +594,21 @@ const upscaleAndEnhanceImage = async (req, res, next) => {
     });
 
     py.on("close", (code) => {
+      if (responded) return;
       try {
-        const result = JSON.parse(stdoutData.trim());
+        let jsonStr = stdoutData.trim();
+        if (jsonStr.includes("__UPSCALE_JSON_START__")) {
+          jsonStr = jsonStr.split("__UPSCALE_JSON_START__")[1].split("__UPSCALE_JSON_END__")[0].trim();
+        } else {
+          const firstBrace = jsonStr.indexOf("{");
+          const lastBrace = jsonStr.lastIndexOf("}");
+          if (firstBrace !== -1 && lastBrace !== -1) {
+            jsonStr = jsonStr.slice(firstBrace, lastBrace + 1);
+          }
+        }
+        const result = JSON.parse(jsonStr);
         if (result.success && result.upscaled) {
-          return res.json({
+          return safeRespond(200, {
             success: true,
             image: result.upscaled,
             upscaled: result.upscaled,
@@ -493,20 +617,23 @@ const upscaleAndEnhanceImage = async (req, res, next) => {
             originalWidth: result.originalWidth,
             originalHeight: result.originalHeight,
             scaleFactor: result.scaleFactor,
+            engine: result.engine || "auto",
             stats: {
               from: `${result.originalWidth}x${result.originalHeight}`,
               to: `${result.width}x${result.height}`,
               scale: `${result.scaleFactor}x`,
+              engine: result.engine || "auto",
             },
           });
         } else {
-          return res.status(500).json({
+          return safeRespond(500, {
             success: false,
             message: result.error || "Image upscaling failed",
+            stderr: stderrData,
           });
         }
       } catch (err) {
-        return res.status(500).json({
+        return safeRespond(500, {
           success: false,
           message: "Failed to parse upscaler output: " + err.message,
           raw: stdoutData,
@@ -515,16 +642,27 @@ const upscaleAndEnhanceImage = async (req, res, next) => {
       }
     });
 
-    py.stdin.write(
-      JSON.stringify({
-        image: imageBase64,
-        scaleFactor: Number(scaleFactor),
-        sharpness: Number(sharpness),
-        contrast: Number(contrast),
-        saturation: Number(saturation),
-      })
-    );
-    py.stdin.end();
+    try {
+      py.stdin.write(
+        JSON.stringify({
+          image: imageBase64,
+          scaleFactor: Number(scaleFactor),
+          sharpness: Number(sharpness),
+          contrast: Number(contrast),
+          saturation: Number(saturation),
+          clarityMode: payload.clarityMode,
+          denoise: payload.denoise,
+          engine: req.body.engine || "auto",
+          interpolation: req.body.interpolation || "lanczos4",
+        })
+      );
+      py.stdin.end();
+    } catch (writeErr) {
+      safeRespond(500, {
+        success: false,
+        message: "Failed to write payload to Python process: " + writeErr.message,
+      });
+    }
   } catch (error) {
     next(error);
   }
@@ -536,4 +674,6 @@ module.exports = {
   applyImageToProduct,
   createProductFromStudio,
   upscaleAndEnhanceImage,
+  generateAiBackground,
+  neuralAiCutout,
 };

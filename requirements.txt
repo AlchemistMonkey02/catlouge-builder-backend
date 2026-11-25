@@ -1,0 +1,14 @@
+# Production AI Image Upscaler Dependencies
+# For Ubuntu / Linux VPS servers without GUI, opencv-python-headless is recommended
+opencv-python-headless>=4.8.0
+pillow>=10.0.0
+numpy>=1.24.0
+fastapi>=0.100.0
+uvicorn[standard]>=0.23.0
+requests>=2.31.0
+python-multipart>=0.0.6
+
+# Deep Learning Super-Resolution (PyTorch + super-image)
+torch>=2.0.0
+torchvision>=0.15.0
+super-image>=0.1.7

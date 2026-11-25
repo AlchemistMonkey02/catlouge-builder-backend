@@ -166,10 +166,6 @@ const catalogueProductSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
-    moq: {
-      type: String,
-      default: "10 Pieces",
-    },
     priceRange: {
       type: String,
       default: "",

@@ -1,7 +1,7 @@
 /**
- * Default Industry Data Bank Generator (Server)
+ * Default Industry Data Bank Generator (Client)
  * Generates rich pre-filled marketing copy (headings, taglines, paragraphs, bullets)
- * and technical specifications (thickness, sizes, finishes, materials, applications, MOQs, price ranges)
+ * and technical specifications (thickness, sizes, finishes, materials, applications, price ranges)
  * for companies based faithfully on their authentic category, cataloged products, and country/district.
  */
 
@@ -254,11 +254,6 @@ function getDefaultDataBank(company, products = []) {
           { value: "Exterior Driveways, Pathways & Landscape Paving", chipLabel: "Driveways & Pathways", label: "Exterior Driveways, Pathways & Landscape Paving" },
           { value: "Industrial Corridors, Warehouses & Railway Platforms", chipLabel: "Industrial Platforms", label: "Industrial Corridors, Warehouses & Railway Platforms" }
         ],
-        moqs: [
-          { value: "500 sq.ft (Quarry Lot)", chipLabel: "500 sq.ft", label: "500 sq.ft (Standard Quarry Lot)" },
-          { value: "1 Truckload (12,000 sq.ft)", chipLabel: "1 Truckload", label: "1 Truckload (12,000 sq.ft Bulk Lot)" },
-          { value: "2,000 sq.ft (Commercial Project)", chipLabel: "2,000 sq.ft", label: "2,000 sq.ft (Commercial Project Lot)" }
-        ],
         priceRanges: [
           { value: `${sym}55 – ${sym}95 / sq.ft`, chipLabel: `${sym}55-95`, label: `${sym}55 – ${sym}95 / sq.ft (Economy Polish)` },
           { value: `${sym}85 – ${sym}140 / sq.ft`, chipLabel: `${sym}85-140`, label: `${sym}85 – ${sym}140 / sq.ft (Calibrated Heavy)` },
@@ -363,10 +358,6 @@ function getDefaultDataBank(company, products = []) {
           { value: "High Traffic Commercial Flooring, Patios & Facades", chipLabel: "Flooring & Facades", label: "High Traffic Commercial Flooring, Patios & Facades" },
           { value: "Heritage Restoration, Temples & Classical Monuments", chipLabel: "Heritage Monuments", label: "Heritage Restoration, Temples & Classical Monuments" }
         ],
-        moqs: [
-          { value: "500 sq.ft (Quarry Lot)", chipLabel: "500 sq.ft", label: "500 sq.ft (Quarry Lot)" },
-          { value: "1 Container / 20 Tonnes", chipLabel: "20T Container", label: "1 Container / 20 Tonnes (Export Grade)" }
-        ],
         priceRanges: [
           { value: `${sym}110 – ${sym}180 / sq.ft`, chipLabel: `${sym}110-180`, label: `${sym}110 – ${sym}180 / sq.ft (Sawn Cladding)` },
           { value: `${sym}140 – ${sym}240 / sq.ft`, chipLabel: `${sym}140-240`, label: `${sym}140 – ${sym}240 / sq.ft (Calibrated Landscape)` }
@@ -468,11 +459,6 @@ function getDefaultDataBank(company, products = []) {
           { value: "Malwa Desi Garlic in 25kg Aerated Red Mesh Bags", chipLabel: "25kg Mesh Bags", label: "Malwa Desi Garlic in 25kg Aerated Red Mesh Bags" },
           { value: "Amleta Big Clove in 10kg Corrugated Boxes", chipLabel: "10kg Cartons", label: "Amleta Big Clove in 10kg Corrugated Boxes" },
           { value: "Mandi Wholesale, Food Processing & Dehydration", chipLabel: "Food Processing", label: "Mandi Wholesale, Food Processing & Dehydration" }
-        ],
-        moqs: [
-          { value: "500 kg (Wholesale Mandi Lot)", chipLabel: "500 kg", label: "500 kg (Wholesale Mandi Lot)" },
-          { value: "5 Quintals (Wholesale Pack)", chipLabel: "5 Quintals", label: "5 Quintals (500 kg Trade Lot)" },
-          { value: "1 Metric Tonne (Export Container)", chipLabel: "1 MT", label: "1 Metric Tonne (Containerized)" }
         ],
         priceRanges: [
           { value: `${sym}180 – ${sym}240 / kg`, chipLabel: `${sym}180-240`, label: `${sym}180 – ${sym}240 / kg (Grade A Cured)` },
@@ -577,11 +563,6 @@ function getDefaultDataBank(company, products = []) {
           { value: "Designer Boutique High-Fashion Collections", chipLabel: "Boutique Fashion", label: "Designer Boutique High-Fashion Collections" },
           { value: "Aristocratic Summer Heritage Draping", chipLabel: "Summer Draping", label: "Aristocratic Summer Heritage Draping" }
         ],
-        moqs: [
-          { value: "10 Pieces (Wholesale Boutique Lot)", chipLabel: "10 Pieces", label: "10 Pieces (Wholesale Boutique Lot)" },
-          { value: "25 Pieces (Assorted Colors Lot)", chipLabel: "25 Pieces", label: "25 Pieces (Assorted Colors Lot)" },
-          { value: "50 Metres (Running Yardage)", chipLabel: "50 Metres", label: "50 Metres (Running Fabric Yardage)" }
-        ],
         priceRanges: [
           { value: `${sym}2,800 – ${sym}6,500`, chipLabel: `${sym}2,800-6.5k`, label: `${sym}2,800 – ${sym}6,500 (Master Weaver Pure Silk-Cotton)` },
           { value: `${sym}1,400 – ${sym}2,800`, chipLabel: `${sym}1,400-2.8k`, label: `${sym}1,400 – ${sym}2,800 (Pure Cotton Doria Everyday)` },
@@ -674,11 +655,6 @@ function getDefaultDataBank(company, products = []) {
       applications: [
         { value: "Commercial, Industrial & Professional Deployment", chipLabel: "Commercial Deploy", label: "Commercial, Industrial & Professional Deployment" },
         { value: "Institutional & Enterprise High-Reliability Operations", chipLabel: "Enterprise Ops", label: "Institutional & Enterprise High-Reliability Operations" }
-      ],
-      moqs: [
-        { value: "10 Units (Standard Trade Minimum)", chipLabel: "10 Units", label: "10 Units (Standard Trade Minimum)" },
-        { value: "50 Units (Wholesale Commercial Batch)", chipLabel: "50 Units", label: "50 Units (Wholesale Commercial Batch)" },
-        { value: "250 Units (Master Distributor Container)", chipLabel: "250 Units", label: "250 Units (Master Distributor Container)" }
       ],
       priceRanges: [
         { value: `${sym}850 – ${sym}1,500`, chipLabel: `${sym}850-1.5k`, label: `${sym}850 – ${sym}1,500 (Standard)` },
