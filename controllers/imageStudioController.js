@@ -351,7 +351,19 @@ const neuralAiCutout = async (req, res, next) => {
     }
 
     let imageBase64 = image;
-    if (image.startsWith("http://") || image.startsWith("https://")) {
+    if (image.startsWith("/")) {
+      const localPath = path.join(__dirname, "../public", image);
+      if (fs.existsSync(localPath)) {
+        const buffer = fs.readFileSync(localPath);
+        imageBase64 = `data:image/jpeg;base64,${buffer.toString("base64")}`;
+      } else {
+        const fullUrl = `${req.protocol}://${req.get("host")}${image}`;
+        const response = await fetch(fullUrl);
+        const arrayBuffer = await response.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        imageBase64 = `data:image/jpeg;base64,${buffer.toString("base64")}`;
+      }
+    } else if (image.startsWith("http://") || image.startsWith("https://")) {
       const response = await fetch(image);
       const arrayBuffer = await response.arrayBuffer();
       const buffer = Buffer.from(arrayBuffer);

@@ -10,11 +10,14 @@ os.environ["ORT_LOGGING_LEVEL"] = "3"
 from PIL import Image
 from rembg import remove, new_session
 
-# Pre-create ultra-fast lightweight u2netp session strictly on CPU
+# Pre-create high-accuracy isnet-general-use session strictly on CPU (fallback to u2net)
 try:
-    session = new_session("u2netp", providers=["CPUExecutionProvider"])
+    session = new_session("isnet-general-use", providers=["CPUExecutionProvider"])
 except Exception:
-    session = None
+    try:
+        session = new_session("u2net", providers=["CPUExecutionProvider"])
+    except Exception:
+        session = None
 
 def process():
     try:
@@ -36,11 +39,11 @@ def process():
         image_bytes = base64.b64decode(image_b64)
         input_image = Image.open(io.BytesIO(image_bytes))
 
-        # Perform neural background removal
+        # Perform neural background removal with mask post-processing
         if session:
-            output_image = remove(input_image, session=session)
+            output_image = remove(input_image, session=session, post_process_mask=True)
         else:
-            output_image = remove(input_image)
+            output_image = remove(input_image, post_process_mask=True)
 
         # Encode to PNG base64
         buffered = io.BytesIO()
