@@ -39,11 +39,19 @@ def process():
         image_bytes = base64.b64decode(image_b64)
         input_image = Image.open(io.BytesIO(image_bytes))
 
-        # Perform neural background removal with mask post-processing
+        # Perform neural background removal with alpha matting for clean fabric/border edges
         if session:
-            output_image = remove(input_image, session=session, post_process_mask=True)
+            output_image = remove(
+                input_image,
+                session=session,
+                alpha_matting=True,
+                alpha_matting_foreground_threshold=240,
+                alpha_matting_background_threshold=10,
+                alpha_matting_erode_size=10,
+                post_process_mask=True,
+            )
         else:
-            output_image = remove(input_image, post_process_mask=True)
+            output_image = remove(input_image, alpha_matting=True, post_process_mask=True)
 
         # Encode to PNG base64
         buffered = io.BytesIO()
