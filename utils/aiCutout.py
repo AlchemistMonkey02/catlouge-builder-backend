@@ -64,7 +64,11 @@ def process():
         rgb_in = np.array(input_image.convert("RGB"))
         arr[:, :, :3] = np.where((filled & (alpha <= 128))[:, :, None], rgb_in, arr[:, :, :3])
         arr[:, :, 3] = new_alpha
-        output_image = Image.fromarray(arr, "RGBA")
+        # Guard: if foreground is <12% (full-frame fabric close-up with no background), keep original
+        if (new_alpha > 128).mean() < 0.12:
+            output_image = input_image.convert("RGBA")
+        else:
+            output_image = Image.fromarray(arr, "RGBA")
 
         # Encode to PNG base64
         buffered = io.BytesIO()
