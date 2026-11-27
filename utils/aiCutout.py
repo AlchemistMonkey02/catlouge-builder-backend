@@ -59,7 +59,7 @@ def process():
         rgba_out = output_image.convert("RGBA")
         arr = np.array(rgba_out)
         alpha = arr[:, :, 3]
-        closed = binary_closing(alpha > 128, iterations=6)
+        closed = binary_closing(alpha > 128, structure=np.ones((15, 15)), iterations=2)
         filled = binary_fill_holes(closed)
         new_alpha = np.where(filled & (alpha <= 128), 255, alpha).astype(np.uint8)
         rgb_in = np.array(input_image.convert("RGB"))
