@@ -10,12 +10,12 @@ os.environ["ORT_LOGGING_LEVEL"] = "3"
 from PIL import Image
 from rembg import remove, new_session
 
-# Pre-create high-accuracy isnet-general-use session strictly on CPU (fallback to u2net)
+# Pre-create high-accuracy birefnet-general session strictly on CPU (fallback to isnet-general-use)
 try:
-    session = new_session("isnet-general-use", providers=["CPUExecutionProvider"])
+    session = new_session("birefnet-general", providers=["CPUExecutionProvider"])
 except Exception:
     try:
-        session = new_session("u2net", providers=["CPUExecutionProvider"])
+        session = new_session("isnet-general-use", providers=["CPUExecutionProvider"])
     except Exception:
         session = None
 
