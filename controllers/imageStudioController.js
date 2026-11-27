@@ -372,10 +372,21 @@ const neuralAiCutout = async (req, res, next) => {
 
     const { spawn } = require("child_process");
     const scriptPath = path.join(__dirname, "../utils/aiCutout.py");
-    const py = spawn("python", [scriptPath]);
+    const pythonCmd = process.env.PYTHON_BIN || (process.platform === "win32" ? "python" : "python3");
+    const py = spawn(pythonCmd, [scriptPath]);
 
     let stdoutData = "";
     let stderrData = "";
+    let responded = false;
+
+    py.on("error", (err) => {
+      if (responded) return;
+      responded = true;
+      return res.status(500).json({
+        success: false,
+        message: `Failed to start Python (${pythonCmd}): ${err.message}`,
+      });
+    });
 
     py.stdout.on("data", (chunk) => {
       stdoutData += chunk.toString();
@@ -386,6 +397,8 @@ const neuralAiCutout = async (req, res, next) => {
     });
 
     py.on("close", (code) => {
+      if (responded) return;
+      responded = true;
       try {
         const result = JSON.parse(stdoutData.trim());
         if (result.success && result.cutout) {
