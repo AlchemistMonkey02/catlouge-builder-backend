@@ -9,6 +9,8 @@ os.environ["ORT_LOGGING_LEVEL"] = "3"
 
 from PIL import Image
 from rembg import remove, new_session
+import numpy as np
+from scipy.ndimage import binary_fill_holes
 
 # Pre-create high-accuracy isnet-general-use session strictly on CPU (fallback to u2net)
 try:
@@ -52,6 +54,17 @@ def process():
             )
         else:
             output_image = remove(input_image, alpha_matting=True, post_process_mask=True)
+
+        # Fill any enclosed interior holes inside the foreground mask
+        rgba_out = output_image.convert("RGBA")
+        arr = np.array(rgba_out)
+        alpha = arr[:, :, 3]
+        filled = binary_fill_holes(alpha > 128)
+        new_alpha = np.where(filled & (alpha <= 128), 255, alpha).astype(np.uint8)
+        rgb_in = np.array(input_image.convert("RGB"))
+        arr[:, :, :3] = np.where((filled & (alpha <= 128))[:, :, None], rgb_in, arr[:, :, :3])
+        arr[:, :, 3] = new_alpha
+        output_image = Image.fromarray(arr, "RGBA")
 
         # Encode to PNG base64
         buffered = io.BytesIO()
